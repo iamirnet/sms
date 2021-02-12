@@ -1,0 +1,26 @@
+{
+    "name": "iamirnet/sms",
+    "description": "SMS PHP",
+    "keywords": ["php","sms", "message", "gateway", "send sms"],
+    "homepage": "https://php.iamir.net/packages/sms",
+    "license": "MIT",
+    "authors": [
+        {
+            "name" : "iamirnet",
+            "email" : "me@iamir.net",
+            "homepage": "https://iamir.net",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "iAmirNet\\SMS\\": "src/"
+        }
+    },
+    "require": {
+        "ippanel/php-rest-sdk": "^1.0",
+        "kavenegar/php": "^1.2"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
