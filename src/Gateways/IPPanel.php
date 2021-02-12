@@ -23,7 +23,7 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
     {
         foreach ($options as $index => $option)
             $this->$index = $option;
-        if ($this->client)
+        if (!$this->client)
             $this->client = new \IPPanel\Client($this->token);
     }
 
