@@ -20,12 +20,15 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
     public $token = null;
     public $client = null;
     public $sender = null;
+    public $sender_pattern = null;
+    public $footer = null;
 
     public function __construct(array $options)
     {
-        $this->token = $options['key'];
-        $this->sender = isset($options['sender']) && $options['sender'] ? $options['sender'] : null;
-        $this->client = new \Kavenegar\KavenegarApi($this->token);
+        foreach ($options as $index => $option)
+            $this->$index = $option;
+        if ($this->client)
+            $this->client = new \Kavenegar\KavenegarApi($this->token);
     }
 
     public function check($id)
@@ -45,11 +48,13 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
 
     public function send($receiver, $message, $sender = null)
     {
+        if ($this->footer)
+            $message .= "\n" . $this->footer;
         return (array) $this->client->Send((string)($sender ?: $this->sender), (is_array($receiver) ? $receiver : [$receiver]), $message);
     }
 
     public function sendByPattern($pattern, $receiver, $message, $sender = null)
     {
-        return (array) $this->client->Send((string)($sender ?: $this->sender), (is_array($receiver) ? $receiver : [$receiver]), $this->setTextToPattern($pattern, $message));
+        return (array) $this->send($receiver, $this->setTextToPattern($pattern, $message), $this->sender_pattern);
     }
 }

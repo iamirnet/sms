@@ -16,12 +16,15 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
     public $token = null;
     public $client = null;
     public $sender = null;
+    public $sender_pattern = null;
+    public $footer = null;
 
     public function __construct(array $options)
     {
-        $this->token = $options['key'];
-        $this->sender = isset($options['sender']) && $options['sender'] ? $options['sender'] : null;
-        $this->client = new \IPPanel\Client($this->token);
+        foreach ($options as $index => $option)
+            $this->$index = $option;
+        if ($this->client)
+            $this->client = new \IPPanel\Client($this->token);
     }
 
     public function check($id)
@@ -44,6 +47,8 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
 
     public function send($receiver, $message, $sender = null)
     {
+        if ($this->footer)
+            $message .= "\n" . $this->footer;
         return (array) $this->client->send((string)($sender ?: $this->sender), (is_array($receiver) ? $receiver : [$receiver]), $message);
     }
 
@@ -51,7 +56,7 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
     {
         return (array) $this->client->sendPattern(
             $pattern,
-            (string)($sender ?: $this->sender),
+            (string)($sender ?: ($this->sender_pattern ? :$this->sender)),
             (is_array($receiver) ? $receiver : [$receiver]),
             $message
         );
