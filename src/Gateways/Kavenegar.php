@@ -11,8 +11,12 @@
 namespace iLaravel\iSMS\Vendor\GateWays;
 
 
+use iAmirNet\SMS\Traits\SetTextToPattern;
+
 class Kavenegar extends \iAmirNet\SMS\Request\Request
 {
+    use SetTextToPattern;
+
     public $token = null;
     public $client = null;
     public $sender = null;
@@ -21,39 +25,31 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
     {
         $this->token = $options['key'];
         $this->sender = isset($options['sender']) && $options['sender'] ? $options['sender'] : null;
-        $this->client = new \IPPanel\Client($this->token);
+        $this->client = new \Kavenegar\KavenegarApi($this->token);
     }
 
     public function check($id)
     {
-        list($statuses, $paginationInfo) = $this->client->fetchStatuses($id, 0, 10);
-        $statuses = array_unique(array_column($statuses, 'status'));
-        return count($statuses) == 1 ? $statuses[0] : 'sent';
+        return (array) $this->client->Status($id);
     }
 
     public function fetch($id)
     {
-        return (array) $this->client->getMessage($id);
+        return (array) $this->client->Select($id);
     }
 
-    public function fetchAll($page, $limit)
+    public function fetchAll($page, $sender)
     {
-        list($messages, $paginationInfo) = $this->client->fetchInbox($page, $limit);
-        return $messages;
+        return (array) $this->client->LatestOutbox($page, $sender);
     }
 
     public function send($receiver, $message, $sender = null)
     {
-        return (array) $this->client->send((string)($sender ?: $this->sender), (is_array($receiver) ? $receiver : [$receiver]), $message);
+        return (array) $this->client->Send((string)($sender ?: $this->sender), (is_array($receiver) ? $receiver : [$receiver]), $message);
     }
 
     public function sendByPattern($pattern, $receiver, $message, $sender = null)
     {
-        return (array) $this->client->sendPattern(
-            $pattern,
-            (string)($sender ?: $this->sender),
-            (is_array($receiver) ? $receiver : [$receiver]),
-            $message
-        );
+        return (array) $this->client->Send((string)($sender ?: $this->sender), (is_array($receiver) ? $receiver : [$receiver]), $this->setTextToPattern($pattern, $message));
     }
 }
