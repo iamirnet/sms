@@ -8,7 +8,7 @@
  * Copyright (c) 2020. Powered by iamir.net
  */
 
-namespace iLaravel\iSMS\Vendor\GateWays;
+namespace iAmirNet\SMS\Gateways;
 
 
 use iAmirNet\SMS\Traits\SetTextToPattern;
@@ -17,13 +17,15 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
 {
     use SetTextToPattern;
 
+    public $name = 'kavenegar';
+
     public $token = null;
     public $client = null;
     public $sender = null;
     public $sender_pattern = null;
     public $footer = null;
 
-    public function __construct(array $options)
+    public function __construct(array $options = [])
     {
         foreach ($options as $index => $option)
             $this->$index = $option;

@@ -8,11 +8,13 @@ use iAmirNet\SMS\Request\Request;
 
 class Telegram extends Request
 {
+    public $name = 'telegram';
+
     public $token = null;
     public $client = null;
     public $sender = null;
 
-    public function __construct(array $options)
+    public function __construct(array $options = [])
     {
     }
 

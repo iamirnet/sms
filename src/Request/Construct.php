@@ -6,5 +6,5 @@ namespace iAmirNet\SMS\Request;
 
 interface Construct
 {
-    public function __construct(array $options);
+    public function __construct(array $options = []);
 }

@@ -8,18 +8,24 @@
  * Copyright (c) 2020. Powered by iamir.net
  */
 
-namespace iLaravel\iSMS\Vendor\GateWays;
+namespace iAmirNet\SMS\Gateways;
 
+
+use iAmirNet\SMS\Traits\SetTextToPattern;
 
 class IPPanel extends \iAmirNet\SMS\Request\Request
 {
+    use SetTextToPattern;
+
+    public $name = 'ippanel';
+
     public $token = null;
     public $client = null;
     public $sender = null;
     public $sender_pattern = null;
     public $footer = null;
 
-    public function __construct(array $options)
+    public function __construct(array $options = [])
     {
         foreach ($options as $index => $option)
             $this->$index = $option;
@@ -54,11 +60,14 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
 
     public function sendByPattern($pattern, $receiver, $message, $sender = null)
     {
-        return (array) $this->client->sendPattern(
-            $pattern,
-            (string)($sender ?: ($this->sender_pattern ? :$this->sender)),
-            (is_array($receiver) ? $receiver : [$receiver]),
-            $message
-        );
+        if (is_array($pattern))
+            return (array) $this->send($receiver, $this->setTextToPattern($pattern, $message), $this->sender_pattern);
+        else
+            return (array) $this->client->sendPattern(
+                $pattern,
+                (string)($sender ?: ($this->sender_pattern ? :$this->sender)),
+                (is_array($receiver) ? $receiver : [$receiver]),
+                $message
+            );
     }
 }
