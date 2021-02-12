@@ -12,6 +12,8 @@
             "role": "Developer"
         }
     ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "autoload": {
         "psr-4": {
             "iAmirNet\\SMS\\": "src/"
@@ -21,6 +23,4 @@
         "ippanel/php-rest-sdk": "^1.0",
         "kavenegar/php": "^1.2"
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true
 }
