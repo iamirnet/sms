@@ -13,7 +13,6 @@ use IPPanel\Errors\Error;
 use IPPanel\Errors\HttpException;
 
 use iAmirNet\SMS\Traits\SetTextToPattern;
-use IPPanel\Errors\ResponseCodes;
 
 class IPPanel extends \iAmirNet\SMS\Request\Request
 {

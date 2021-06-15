@@ -6,10 +6,10 @@ namespace iAmirNet\SMS\Traits;
 
 trait SetTextToPattern
 {
-    public function setTextToPattern($pattern, $message)
+    public function setTextToPattern($values, $message)
     {
-        $patterns = array_map(function($pattern) {return "%{$pattern}%";}, array_keys($message));
-        $message = str_replace($patterns, array_values($message), $pattern);
+        $replace_values = array_map(function($replace_value) {return "%{$replace_value}%";}, array_keys($values));
+        $message = str_replace($replace_values, array_values($values), $message);
         return $message;
     }
 }

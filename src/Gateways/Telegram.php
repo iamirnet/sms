@@ -48,7 +48,7 @@ class Telegram extends Request
         }
     }
 
-    public function sendByPattern($pattern, $receiver, $message, $sender = null)
+    public function sendByPattern($values, $receiver, $message, $sender = null)
     {
         // TODO: Implement sendByPattern() method.
     }
