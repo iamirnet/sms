@@ -14,7 +14,7 @@ use IPPanel\Errors\HttpException;
 
 use iAmirNet\SMS\Traits\SetTextToPattern;
 
-class IPPanel extends \iAmirNet\SMS\Request\Request
+class IPPanel
 {
     use SetTextToPattern;
 
@@ -22,11 +22,15 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
 
     public $token = null;
     public $client = null;
-    public $sender = null;
-    public $sender_pattern = null;
+    public $number = null;
+    public $number_pattern = null;
     public $footer = null;
 
-    public function __construct(array $options = [])
+    public static $countries = [
+        '98'
+    ];
+
+    public function __construct($options = [])
     {
         foreach ($options as $index => $option)
             $this->$index = $option;
@@ -50,7 +54,7 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
     public function fetch($id)
     {
         try{
-            return ['status' => true, 'result' => (array) $this->client->getMessage($id)];
+            return ['status' => true, 'result' => $this->client->getMessage($id)];
         } catch (Error $e) { // ippanel error
             return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
         } catch (HttpException $e) { // http error
@@ -70,12 +74,14 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
         }
     }
 
-    public function send($receiver, $message, $sender = null)
+    public function send($receiver, $message, $number = null)
     {
         if ($this->footer)
             $message .= "\n" . $this->footer;
         try{
-            return ['status' => true, 'result' => (array) $this->client->send((string)($sender ?: $this->sender), (is_array($receiver) ? $receiver : [$receiver]), $message)];
+            $result = $this->client->send((string)($number ?: $this->number), (is_array($receiver) ? $receiver : [$receiver]), $message);
+            $result = $this->fetch($result)['result'];
+            return ['status' => true, 'result' => (array) $result, 'id' => $result->bulkId];
         } catch (Error $e) { // ippanel error
             return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
         } catch (HttpException $e) { // http error
@@ -83,19 +89,23 @@ class IPPanel extends \iAmirNet\SMS\Request\Request
         }
     }
 
-    public function sendByPattern($pattern, $receiver, $message, $sender = null)
+    public function sendByPattern($pattern, $receiver, $message, $provider = false, $number = null)
     {
-
-        if (is_array($pattern))
-            return (array) $this->send($receiver, $this->setTextToPattern($pattern, $message), $this->sender_pattern);
+        if (!$provider)
+            return (array) $this->send($receiver, $this->setTextToPattern((array) $message, $pattern), $number ?: ($this->number_pattern ? :$this->number));
         else
             try{
-                return ['status' => true, 'result' => (array) $this->client->sendPattern(
+                $result = $this->client->sendPattern(
                     $pattern,
-                    (string)($sender ?: ($this->sender_pattern ? :$this->sender)),
+                    (string)($number ?: ($this->number_pattern ? :$this->number)),
                     $receiver,
-                    $message
-                )];
+                    array_map(function ($value) {
+                        return (string) $value;
+                    }, (array) $message)
+                );
+                sleep(2);
+                $result = $this->fetch($result)['result'];
+                return ['status' => true, 'result' => (array) $result, 'id' => $result->bulkId];
             } catch (Error $e) { // ippanel error
                 return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
             } catch (HttpException $e) { // http error

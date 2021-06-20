@@ -23,9 +23,13 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
 
     public $token = null;
     public $client = null;
-    public $sender = null;
-    public $sender_pattern = null;
+    public $number = null;
+    public $number_pattern = null;
     public $footer = null;
+
+    public static $countries = [
+        '98'
+    ];
 
     public function __construct(array $options = [])
     {
@@ -60,10 +64,10 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
         }
     }
 
-    public function fetchAll($page, $sender)
+    public function fetchAll($page, $number)
     {
         try{
-            return ['status' => true, 'result' => (array) $this->client->LatestOutbox($page, $sender)];
+            return ['status' => true, 'result' => (array) $this->client->LatestOutbox($page, $number)];
         } catch (ApiException $e) {
             return ['status' => false, 'result' => $e->errorMessage(), 'code' => $e->getCode()];
         } catch (HttpException $e) {
@@ -71,12 +75,12 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
         }
     }
 
-    public function send($receiver, $message, $sender = null)
+    public function send($receiver, $message, $number = null)
     {
         if ($this->footer)
             $message .= "\n" . $this->footer;
         try{
-            $this->client->Send((string)($sender ?: $this->sender), (is_array($receiver) ? $receiver : [$receiver]), $message);
+            $this->client->Send((string)($number ?: $this->number), (is_array($receiver) ? $receiver : [$receiver]), $message);
             return ['status' => true, 'result' => 'sent'];
         }
         catch(ApiException $e){
@@ -87,8 +91,8 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
         }
     }
 
-    public function sendByPattern($values, $receiver, $message, $sender = null)
+    public function sendByPattern($values, $receiver, $message, $number = null)
     {
-        return (array) $this->send($receiver, $this->setTextToPattern($values, $message), $this->sender_pattern);
+        return (array) $this->send($receiver, $this->setTextToPattern($values, $message), $number ?: ($this->number_pattern ? :$this->number));
     }
 }

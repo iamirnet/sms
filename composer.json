@@ -14,11 +14,14 @@
             "role": "Developer"
         }
     ],
-    "require-dev": {
+    "require": {
         "ippanel/php-rest-sdk": "^1.0",
         "kavenegar/php": "^1.2"
     },
     "autoload": {
+        "classmap": [
+            "src"
+        ],
         "psr-4": {
             "iAmirNet\\SMS\\": "src/"
         }
