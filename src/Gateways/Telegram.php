@@ -45,10 +45,12 @@ class Telegram
     public function _send($method, $data, $arg = null)
     {
         $url = "https://api.telegram.org/bot" . $this->token . "/" . $method;
+        $r_url = "https://curl.iamir.net/render.php";
+        $data = ['url' => urlencode($url), 'data' => $data];
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_URL, $r_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $res = json_decode(curl_exec($ch));
         if ($res->ok) {
