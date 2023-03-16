@@ -93,6 +93,6 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
 
     public function sendByPattern($values, $receiver, $message, $number = null)
     {
-        return (array) $this->send($receiver, $this->setTextToPattern($values, $message), $number ?: ($this->number_pattern ? :$this->number));
+        return $this->send($receiver, $this->setTextToPattern((array)$message, $values), $number ?: ($this->number_pattern ? :$this->number));
     }
 }

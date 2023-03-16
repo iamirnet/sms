@@ -9,9 +9,6 @@
  */
 
 namespace iAmirNet\SMS\Gateways;
-use IPPanel\Errors\Error;
-use IPPanel\Errors\HttpException;
-
 use iAmirNet\SMS\Traits\SetTextToPattern;
 
 class SabaPayamak
@@ -38,33 +35,54 @@ class SabaPayamak
         foreach ($options as $index => $option)
             $this->$index = $option;
         if (!$this->client)
-            $this->client = new \Sabapayamak\Sabapayamak($this->api_url);
+            $this->client = new \Sabapayamak\SabapayamakApi($this->api_url);
         if (!$this->path_config)
             $this->path_config = join(DIRECTORY_SEPARATOR, [__DIR__, "..", "config"]);
         $this->path_config = join(DIRECTORY_SEPARATOR, [$this->path_config, "gateways", "sabapayamak"]);
         if (!file_exists($this->path_config))
             mkdir($this->path_config, 0755, true);
-        $this->path_config = join(DIRECTORY_SEPARATOR, [$this->path_config, $this->username . ".json"]);
+        $this->path_config = join(DIRECTORY_SEPARATOR, [$this->path_config, $this->username . $this->number . ".json"]);
         $config = [];
         if (file_exists($this->path_config)) {
             $config = json_decode(file_get_contents($this->path_config), true);
+            //dd(date('Y/m/d', strtotime('today')), date('Y/m/d', $config["expired_at"]));
             if ($config["expired_at"] < time()) {
                 $config = [];
             }
         }
-
         if (!isset($config["token"])) {
-            $result = $this->client->GetToken()
+            $result = $this->client->GetToken($this->username, $this->password, $this->number, 365);
+            if (isset($result->status) && $result->status == 200 && isset($result->data->token)) {
+                $config['token'] = $result->data->token;
+                $config['expired_at'] = strtotime("360 day");
+                file_put_contents($this->path_config, json_encode($config));
+            }else {
+                throw new \Exception('Can\'t create a token.');
+            }
         }
+        $this->token = $config['token'];
+    }
 
+    public function credit()
+    {
+        try{
+            $result = $this->client->GetCredit($this->token);
+            return
+                isset($result->status) && $result->status == 200 && isset($result->data) ?
+                    ['status' => true, 'result' => $result->data] :
+                    ['status' => false, 'result' => isset($result->errors) && $result->errors ? $result->errors : (isset($result->message) && $result->message ? $result->message : "NOK"), 'code' => $result->status];
+        } catch (Error $e) { // ippanel error
+            return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
+        } catch (HttpException $e) { // http error
+            return ['status' => false, 'result' => $e->getMessage(), 'code' => $e->getCode()];
+        }
     }
 
     public function check($id)
     {
         try{
-            list($statuses, $paginationInfo) = $this->client->fetchStatuses($id, 0, 10);
-            $statuses = array_unique(array_column($statuses, 'status'));
-            return ['status' => true, 'result' => count($statuses) == 1 ? $statuses[0] : 'sent'];
+            $result = $this->fetch($id);
+            return $result['status'] && isset($result['result']['status'])? ['status' => true, 'result' => $result['result']['status'], 'id' => $result['id']] : $result['status'];
         } catch (Error $e) { // ippanel error
             return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
         } catch (HttpException $e) { // http error
@@ -75,7 +93,10 @@ class SabaPayamak
     public function fetch($id)
     {
         try{
-            return ['status' => true, 'result' => $this->client->getMessage($id)];
+            $result = $this->client->GetMessageById($id, $this->token);
+            if (isset($result->status) && $result->status == 200 && isset($result->data->messageID)) {
+                return ['status' => true, 'result' => (array) $result->data, 'id' => $result->data->messageID];
+            }else return ['status' => false, 'result' => isset($result->errors) && $result->errors ? $result->errors : (isset($result->message) && $result->message ? $result->message : "NOK"), 'code' => $result->status];
         } catch (Error $e) { // ippanel error
             return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
         } catch (HttpException $e) { // http error
@@ -83,10 +104,10 @@ class SabaPayamak
         }
     }
 
-    public function fetchAll($page, $limit)
+    public function fetchAll($number = null, $limit = 0)
     {
         try{
-            list($messages, $paginationInfo) = $this->client->fetchInbox($page, $limit);
+            list($messages, $paginationInfo) = $this->client->GetMessageByNumber($this->number, $this->token);
             return ['status' => true, 'result' => $messages];
         } catch (Error $e) { // ippanel error
             return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
@@ -100,9 +121,10 @@ class SabaPayamak
         if ($this->footer)
             $message .= "\n" . $this->footer;
         try{
-            $result = $this->client->send((string)($number ?: $this->number), (is_array($receiver) ? $receiver : [$receiver]), $message);
-            $result = $this->fetch($result)['result'];
-            return ['status' => true, 'result' => (array) $result, 'id' => $result->bulkId];
+            $result = $this->client->SendMessage($message, (is_array($receiver) ? $receiver : [$receiver]), $this->token);
+            if (isset($result->status) && $result->status == 200 && isset($result->data->id)) {
+                return ['status' => true, 'result' => (array) $result->data, 'id' => $result->data->id];
+            }else return ['status' => false, 'result' => isset($result->errors) && $result->errors ? $result->errors : (isset($result->message) && $result->message ? $result->message : "NOK"), 'code' => $result->status];
         } catch (Error $e) { // ippanel error
             return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
         } catch (HttpException $e) { // http error
@@ -110,27 +132,8 @@ class SabaPayamak
         }
     }
 
-    public function sendByPattern($pattern, $receiver, $message, $provider = false, $number = null)
+    public function sendByPattern($values, $receiver, $message, $number = null)
     {
-        if (!$provider)
-            return (array) $this->send($receiver, $this->setTextToPattern((array) $message, $pattern), $number ?: ($this->number_pattern ? :$this->number));
-        else
-            try{
-                $result = $this->client->sendPattern(
-                    $pattern,
-                    (string)($number ?: ($this->number_pattern ? :$this->number)),
-                    $receiver,
-                    array_map(function ($value) {
-                        return (string) $value;
-                    }, (array) $message)
-                );
-                sleep(2);
-                $result = $this->fetch($result)['result'];
-                return ['status' => true, 'result' => (array) $result, 'id' => $result->bulkId];
-            } catch (Error $e) { // ippanel error
-                return ['status' => false, 'result' => $e->unwrap(), 'code' => $e->getCode()];
-            } catch (HttpException $e) { // http error
-                return ['status' => false, 'result' => $e->getMessage(), 'code' => $e->getCode()];
-            }
+        return $this->send($receiver, $this->setTextToPattern((array)$message, $values), $number ?: ($this->number_pattern ? :$this->number));
     }
 }
