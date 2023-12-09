@@ -31,7 +31,7 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
         '98'
     ];
 
-    public function __construct(array $options = [])
+    public function __construct($options = [])
     {
         foreach ($options as $index => $option)
             $this->$index = $option;

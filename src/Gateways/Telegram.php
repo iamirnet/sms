@@ -9,7 +9,7 @@ use iAmirNet\SMS\Traits\SetTextToPattern;
 use IPPanel\Errors\Error;
 use IPPanel\Errors\HttpException;
 
-class Telegram
+class Telegram extends Request
 {
     use SetTextToPattern;
     public $name = 'telegram';

@@ -9,9 +9,10 @@
  */
 
 namespace iAmirNet\SMS\Gateways;
+use iAmirNet\SMS\Request\Request;
 use iAmirNet\SMS\Traits\SetTextToPattern;
 
-class SabaPayamak
+class SabaPayamak extends Request
 {
     use SetTextToPattern;
 
@@ -37,11 +38,13 @@ class SabaPayamak
         if (!$this->client)
             $this->client = new \Sabapayamak\SabapayamakApi($this->api_url);
         if (!$this->path_config)
-            $this->path_config = join(DIRECTORY_SEPARATOR, [__DIR__, "..", "config"]);
-        $this->path_config = join(DIRECTORY_SEPARATOR, [$this->path_config, "gateways", "sabapayamak"]);
+            $this->path_config = implode(DIRECTORY_SEPARATOR, [__DIR__, "..", "config"]);
+        $this->path_config = implode(DIRECTORY_SEPARATOR, [$this->path_config, "gateways", "sabapayamak"]);
         if (!file_exists($this->path_config))
-            mkdir($this->path_config, 0755, true);
-        $this->path_config = join(DIRECTORY_SEPARATOR, [$this->path_config, $this->username . $this->number . ".json"]);
+            if (!mkdir($concurrentDirectory = $this->path_config, 0755, true) && !is_dir($concurrentDirectory)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+            }
+        $this->path_config = implode(DIRECTORY_SEPARATOR, [$this->path_config, $this->username . $this->number . ".json"]);
         $config = [];
         if (file_exists($this->path_config)) {
             $config = json_decode(file_get_contents($this->path_config), true);

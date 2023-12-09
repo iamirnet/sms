@@ -9,12 +9,13 @@
  */
 
 namespace iAmirNet\SMS\Gateways;
+use iAmirNet\SMS\Request\Request;
 use IPPanel\Errors\Error;
 use IPPanel\Errors\HttpException;
 
 use iAmirNet\SMS\Traits\SetTextToPattern;
 
-class IPPanel
+class IPPanel extends Request
 {
     use SetTextToPattern;
 
@@ -79,7 +80,7 @@ class IPPanel
         if ($this->footer)
             $message .= "\n" . $this->footer;
         try{
-            $result = $this->client->send((string)($number ?: $this->number), (is_array($receiver) ? $receiver : [$receiver]), $message);
+            $result = $this->client->send((string)($number ?: $this->number), array_map([$this, 'clearNumber'], (is_array($receiver) ? $receiver : [$receiver])), $message);
             $result = $this->fetch($result)['result'];
             return ['status' => true, 'result' => (array) $result, 'id' => $result->bulkId];
         } catch (Error $e) { // ippanel error
@@ -98,7 +99,7 @@ class IPPanel
                 $result = $this->client->sendPattern(
                     $pattern,
                     (string)($number ?: ($this->number_pattern ? :$this->number)),
-                    $receiver,
+                    $this->clearNumber($receiver),
                     array_map(function ($value) {
                         return (string) $value;
                     }, (array) $message)
