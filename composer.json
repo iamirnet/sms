@@ -16,7 +16,9 @@
     ],
     "require": {
         "ippanel/php-rest-sdk": "^1.0",
-        "kavenegar/php": "^1.2"
+        "kavenegar/php": "^1.2",
+        "iamirnet/sabapayamak-php": "@dev",
+        "iamirnet/samantel": "^1.0"
     },
     "autoload": {
         "classmap": [

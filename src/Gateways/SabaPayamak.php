@@ -48,7 +48,6 @@ class SabaPayamak extends Request
         $config = [];
         if (file_exists($this->path_config)) {
             $config = json_decode(file_get_contents($this->path_config), true);
-            //dd(date('Y/m/d', strtotime('today')), date('Y/m/d', $config["expired_at"]));
             if ($config["expired_at"] < time()) {
                 $config = [];
             }
