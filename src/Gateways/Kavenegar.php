@@ -80,8 +80,8 @@ class Kavenegar extends \iAmirNet\SMS\Request\Request
         if ($this->footer)
             $message .= "\n" . $this->footer;
         try{
-            $this->client->Send((string)($number ?: $this->number), (is_array($receiver) ? $receiver : [$receiver]), $message);
-            return ['status' => true, 'result' => 'sent'];
+            $result = $this->client->Send((string)($number ?: $this->number), (is_array($receiver) ? $receiver : [$receiver]), $message);
+            return ['status' => true, 'result' => @$result[0], 'id' => @$result[0]->messageid];
         }
         catch(ApiException $e){
             return ['status' => false, 'result' => $e->errorMessage(), 'code' => $e->getCode()];
